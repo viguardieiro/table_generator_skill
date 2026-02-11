@@ -4,7 +4,7 @@ This repo is a **skill for agents** that generates publication-ready LaTeX or Ma
 
 ## What the skill does
 
-- Reads your results (JSON/JSONL)
+- Reads your results (JSON/JSONL/CSV and other tabular formats once converted to records)
 - Creates or uses a declarative table spec
 - Produces camera-ready LaTeX or Markdown tables
 - Highlights best/second-best results
@@ -22,12 +22,15 @@ This repo is a **skill for agents** that generates publication-ready LaTeX or Ma
 ## How to use with an agent (Claude Code / Codex)
 
 1. Clone this repo on the machine running the agent.
-2. Make sure the agent can read `skills/table-generator/SKILL.md`.
-3. Install the package locally (editable install is fine).
-4. In your agent UI, enable/select the **table-generator** skill.
-5. Ask the agent to generate a table from your results.
+2. From the repo root (`table_generator_skill`), install the package locally:
+   - `pip install -e .` (editable install; changes to the code take effect without reinstalling)
+3. Point your agent to the skill file:
+   - Claude Code UI: add the skill from `skills/table-generator/SKILL.md`
+   - Claude Code CLI: `claude code --skill /path/to/table_generator_skill/skills/table-generator/SKILL.md`
+   - Codex CLI: `codex --skill /path/to/table_generator_skill/skills/table-generator/SKILL.md`
+4. Ask the agent to generate a table from your results.
 
-Important: the agent must treat raw results as **read-only** and only write derived files (e.g., a new spec or cleaned copy).
+Important: the agent is instructed to treat raw results as **read-only** and only write derived files (e.g., a new spec or cleaned copy). It is still a good idea to keep backups of your results; you are responsible for protecting your data.
 
 ## Skill files
 
