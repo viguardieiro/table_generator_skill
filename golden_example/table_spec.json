@@ -1,0 +1,30 @@
+{
+  "rows": { "field": "model", "order": ["Baseline", "Ours"] },
+  "cols": { "field": "dataset", "order": ["MNLI"] },
+
+  "metric": {
+    "field": "metric",
+    "value": "acc",
+    "direction": "max"
+  },
+
+  "aggregate": {
+    "over": ["seed"],
+    "stat": "mean",
+    "uncertainty": { "type": "std" }
+  },
+
+  "format": {
+    "mode": "pm",
+    "mean_decimals": 2,
+    "unc_decimals": 2
+  },
+
+  "highlight": {
+    "scope": "column",
+    "best": { "style": "bold" },
+    "second": { "style": "underline" }
+  },
+
+  "output": { "format": "latex" }
+}

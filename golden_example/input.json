@@ -1,0 +1,9 @@
+[
+  {"model": "Baseline", "dataset": "MNLI", "metric": "acc", "seed": 0, "value": 84.1},
+  {"model": "Baseline", "dataset": "MNLI", "metric": "acc", "seed": 1, "value": 84.3},
+  {"model": "Baseline", "dataset": "MNLI", "metric": "acc", "seed": 2, "value": 84.5},
+
+  {"model": "Ours", "dataset": "MNLI", "metric": "acc", "seed": 0, "value": 85.0},
+  {"model": "Ours", "dataset": "MNLI", "metric": "acc", "seed": 1, "value": 85.2},
+  {"model": "Ours", "dataset": "MNLI", "metric": "acc", "seed": 2, "value": 85.4}
+]

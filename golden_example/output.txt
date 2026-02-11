@@ -1,0 +1,11 @@
+\begin{table}[t]
+\centering
+\begin{tabular}{lc}
+\toprule
+ & MNLI \\
+\midrule
+Baseline & 84.30 \(\pm\) 0.20 \\
+Ours & \textbf{85.20 \(\pm\) 0.20} \\
+\bottomrule
+\end{tabular}
+\end{table}
