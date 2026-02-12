@@ -57,6 +57,13 @@ tablegen render --records records.json --spec spec.json --preview --out preview.
 tablegen render --records records.json --spec spec.json --preview --open
 ```
 
+Optional export of computed stats:
+
+```bash
+tablegen render --records records.json --spec spec.json --export stats.json
+tablegen render --records records.json --spec spec.json --export stats.csv
+```
+
 ## Docs
 
 - API reference: `table_generator/docs/api.md`

@@ -14,6 +14,7 @@ from .schema import SchemaError, validate_spec
 from .templates import DEFAULT_RECORDS, DEFAULT_SPEC
 from .pipeline import build_table, compute_highlights, compute_significance
 from .render_html import render_html
+from .export import build_export_rows, write_export_csv, write_export_json
 
 
 def _load_json(path: str) -> Any:
@@ -42,10 +43,11 @@ def cmd_render(args: argparse.Namespace) -> int:
         records = _load_records(args.records)
         spec = _load_json(args.spec)
         validated = validate_spec(spec)
+        table = build_table(records, validated)
+        highlights = compute_highlights(table, validated)
+        markers = compute_significance(table, validated)
+
         if args.preview:
-            table = build_table(records, validated)
-            highlights = compute_highlights(table, validated)
-            markers = compute_significance(table, validated)
             text = render_html(table, highlights, validated, markers)
             result = {"text": text}
         else:
@@ -70,6 +72,16 @@ def cmd_render(args: argparse.Namespace) -> int:
         target = out_path
         if target:
             subprocess.run(["open", target], check=False)
+
+    if args.export:
+        export_rows = build_export_rows(table, highlights, markers)
+        export_format = args.export_format
+        if export_format is None:
+            export_format = "csv" if args.export.endswith(".csv") else "json"
+        if export_format == "csv":
+            write_export_csv(args.export, export_rows)
+        else:
+            write_export_json(args.export, export_rows)
     return 0
 
 
@@ -100,6 +112,17 @@ def build_parser() -> argparse.ArgumentParser:
         "--open",
         action="store_true",
         help="Open the HTML preview in the default browser (macOS only)",
+    )
+    render.add_argument(
+        "--export",
+        required=False,
+        help="Write computed stats to a JSON or CSV file",
+    )
+    render.add_argument(
+        "--export-format",
+        choices=["json", "csv"],
+        required=False,
+        help="Export format (defaults to JSON unless path ends with .csv)",
     )
     render.set_defaults(func=cmd_render)
 
