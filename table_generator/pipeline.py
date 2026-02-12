@@ -9,9 +9,17 @@ from .render_markdown import render_markdown
 from .stats import bootstrap_percentile, mean, median, sem, std
 
 
+def build_table(records: List[Dict[str, Any]], spec: Dict[str, Any]) -> Dict[str, Any]:
+    return _aggregate(records, spec)
+
+
+def compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tuple[Any, Any], str]:
+    return _compute_highlights(table, spec)
+
+
 def render_pipeline(records: List[Dict[str, Any]], spec: Dict[str, Any]) -> Dict[str, Any]:
-    table = _aggregate(records, spec)
-    highlights = _compute_highlights(table, spec)
+    table = build_table(records, spec)
+    highlights = compute_highlights(table, spec)
     if spec["output"]["format"] == "latex":
         text, preamble = render_latex(table, highlights, spec)
     else:
