@@ -19,6 +19,7 @@ This repo is a **skill for agents** that generates publication-ready LaTeX or Ma
 - Output format: LaTeX (booktabs-style) or Markdown (pipe tables)
 - LaTeX details: alignment, table environment on/off, optional caption/label
 - Delta vs baseline columns (absolute or relative)
+- Export computed stats (JSON/CSV) with flags like highlight/significance
 
 ## How to use with an agent (Claude Code / Codex)
 
