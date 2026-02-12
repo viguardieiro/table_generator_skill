@@ -39,6 +39,24 @@ Editable install (recommended during development):
 pip install -e .
 ```
 
+## Quick start
+
+1) Prepare long-form records (JSON/JSONL) and a spec.
+2) Render a table:
+
+```bash
+tablegen render --records records.json --spec spec.json --out table.tex
+```
+
+3) Paste the output into your paper or README.
+
+## Docs
+
+- API reference: `table_generator/docs/api.md`
+- Full spec reference: `table_generator/docs/spec.md`
+- CLI reference: `table_generator/docs/cli.md`
+- Examples: `table_generator/docs/examples.md`
+
 ## Typical workflow
 
 1) Export experimental results from your training/evaluation code (JSON, JSONL, CSV → JSON, etc.)
