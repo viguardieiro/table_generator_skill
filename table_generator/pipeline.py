@@ -132,6 +132,8 @@ def _aggregate(records: List[Dict[str, Any]], spec: Dict[str, Any]) -> Dict[str,
         "col_field": col_field,
     }
     table["rows"] = _apply_row_order_by(table, spec)
+    _validate_groups(table["rows"], rows_spec.get("groups"), axis="rows")
+    _validate_groups(table["cols"], cols_spec.get("groups"), axis="cols")
     return table
 
 
@@ -162,6 +164,33 @@ def _apply_row_order_by(table: Dict[str, Any], spec: Dict[str, Any]) -> List[Any
 
     reverse = direction == "max"
     return sorted(table["rows"], key=key_fn, reverse=reverse)
+
+
+def _validate_groups(items: List[Any], groups: Any, axis: str) -> None:
+    if not groups:
+        return
+    seen = set()
+    for group in groups:
+        for member in group.get("members", []):
+            if member in seen:
+                raise ValueError(f"{axis} group member '{member}' appears in multiple groups")
+            seen.add(member)
+    # Validate members exist in final order
+    missing = [m for m in seen if m not in items]
+    if missing:
+        raise ValueError(f"{axis} group members missing from {axis} order: {missing}")
+
+    # Ensure each group's members are contiguous in final order
+    index = {value: idx for idx, value in enumerate(items)}
+    for group in groups:
+        members = [m for m in group.get("members", []) if m in index]
+        if not members:
+            raise ValueError(f"{axis} group '{group.get('label')}' has no valid members")
+        positions = sorted(index[m] for m in members)
+        if positions != list(range(min(positions), max(positions) + 1)):
+            raise ValueError(
+                f"{axis} group '{group.get('label')}' members are not contiguous in {axis} order"
+            )
 
 
 def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tuple[Any, Any], str]:

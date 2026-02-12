@@ -35,6 +35,7 @@ Fields:
 - `order` (list[string], optional, default: none): explicit row order. Items not listed are appended in observed order.
 - `rename` (object, optional, default: none): mapping applied before ordering.
 - `order_by` (object, optional, default: none): sort rows by a column value.
+- `groups` (list[object], optional, default: none): row grouping with header rows.
 
 `order_by` fields:
 - `column` (string, required): column label to sort by.
@@ -43,6 +44,17 @@ Fields:
 Behavior:
 - Missing values in `order_by.column` are sorted last.
 - If `order` is provided, ordering is applied first and then `order_by` is applied to the resulting rows.
+
+`groups` fields:
+- `label` (string, required): group header label.
+- `members` (list[string], required): row labels in the group.
+- `separator` (string, optional, default: none): `\"midrule\"`, `\"hline\"`, or `\"none\"` (LaTeX only). Markdown inserts a blank line.
+
+Grouping rules:
+- Each row may appear in at most one group.
+- All members must exist in final row labels.
+- Members must be contiguous in the final row order; otherwise the spec is invalid.
+- Rows not listed in any group are rendered outside groups.
 
 ## `cols`
 
@@ -59,6 +71,18 @@ Fields:
 - `field` (string, required): record key used for column labels.
 - `order` (list[string], optional, default: none): explicit column order. Items not listed are appended in observed order.
 - `rename` (object, optional, default: none): mapping applied before ordering.
+- `groups` (list[object], optional, default: none): column grouping with multi-level headers.
+
+`groups` fields:
+- `label` (string, required): column group label.
+- `members` (list[string], required): column labels in the group.
+- `cmidrule` (bool, optional, default: `true`): draw `\\cmidrule` under the group (LaTeX only).
+
+Grouping rules:
+- Each column may appear in at most one group.
+- All members must exist in final column labels.
+- Members must be contiguous in the final column order; otherwise the spec is invalid.
+- Columns not listed in any group appear ungrouped.
 
 ## `metric`
 

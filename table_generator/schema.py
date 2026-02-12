@@ -85,6 +85,33 @@ def validate_spec(spec: Dict[str, Any]) -> Dict[str, Any]:
             raise _path_err(f"spec.{axis}", "Must be an object")
         if "field" not in block:
             raise _path_err(f"spec.{axis}.field", "Missing required field")
+        groups = block.get("groups")
+        if groups is not None:
+            if not isinstance(groups, list):
+                raise _path_err(f"spec.{axis}.groups", "Must be a list")
+            for idx, group in enumerate(groups):
+                if not isinstance(group, dict):
+                    raise _path_err(f"spec.{axis}.groups[{idx}]", "Must be an object")
+                if "label" not in group:
+                    raise _path_err(f"spec.{axis}.groups[{idx}].label", "Missing required field")
+                if "members" not in group or not isinstance(group["members"], list) or not group["members"]:
+                    raise _path_err(
+                        f"spec.{axis}.groups[{idx}].members", "Must be a non-empty list"
+                    )
+                if axis == "rows":
+                    sep = group.get("separator")
+                    if sep is not None and sep not in ("midrule", "hline", "none"):
+                        raise _path_err(
+                            f"spec.{axis}.groups[{idx}].separator",
+                            "Unsupported separator",
+                        )
+                if axis == "cols":
+                    cmid = group.get("cmidrule")
+                    if cmid is not None and not isinstance(cmid, bool):
+                        raise _path_err(
+                            f"spec.{axis}.groups[{idx}].cmidrule",
+                            "Must be true or false",
+                        )
 
     # Metric
     metric = merged["metric"]

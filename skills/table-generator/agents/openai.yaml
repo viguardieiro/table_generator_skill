@@ -1,0 +1,4 @@
+interface:
+  display_name: "Table Generator"
+  short_description: "Generate publication-ready result tables"
+  default_prompt: "Use $table-generator to build a LaTeX or Markdown results table from my records and spec."

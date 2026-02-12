@@ -106,12 +106,63 @@ def render_latex(
     if escape:
         header = [_escape_latex(h) for h in header]
 
+    col_groups = spec.get("cols", {}).get("groups") or []
+    header_lines = []
+    if col_groups:
+        group_row = [""]  # empty top-left corner
+        cmidrules = []
+        group_lookup = {}
+        for group in col_groups:
+            for member in group.get("members", []):
+                group_lookup[member] = group
+        segments = []
+        current = None
+        for col in cols:
+            group = group_lookup.get(col)
+            label = group.get("label", "") if group else ""
+            cmid = group.get("cmidrule", True) if group else False
+            if current is None or current["label"] != label:
+                current = {"label": label, "span": 1, "cmidrule": cmid}
+                segments.append(current)
+            else:
+                current["span"] += 1
+        col_index = 2
+        for seg in segments:
+            label = _escape_latex(seg["label"]) if escape else seg["label"]
+            group_row.append(f"\\multicolumn{{{seg['span']}}}{{c}}{{{label}}}")
+            if seg["cmidrule"] and seg["label"]:
+                cmidrules.append(f"\\cmidrule(lr){{{col_index}-{col_index + seg['span'] - 1}}}")
+            col_index += seg["span"]
+        header_lines.append(" & ".join(group_row) + " \\\\")
+        if cmidrules:
+            header_lines.append(" ".join(cmidrules))
+
     lines = []
     lines.append(top_rule)
+    if header_lines:
+        lines.extend(header_lines)
     lines.append(" & ".join(header) + " \\\\")
     lines.append(mid_rule)
 
+    row_groups = spec.get("rows", {}).get("groups") or []
+    group_map = {}
+    group_last = {}
+    for group in row_groups:
+        members = [m for m in group.get("members", []) if m in rows]
+        for member in members:
+            group_map[member] = group
+        if members:
+            group_last[group.get("label", "")] = members[-1]
+
+    current_group = None
     for r in rows:
+        group = group_map.get(r)
+        if group is not None and group is not current_group:
+            label = group.get("label", "")
+            label = _escape_latex(label) if escape else label
+            label_row = f"\\multicolumn{{{len(cols)+1}}}{{l}}{{\\textbf{{{label}}}}} \\\\"
+            lines.append(label_row)
+            current_group = group
         row_label = _escape_latex(str(r)) if escape else str(r)
         row_cells = [row_label]
         for c in cols:
@@ -131,6 +182,12 @@ def render_latex(
                         text = _apply_style(text, style)
             row_cells.append(text)
         lines.append(" & ".join(row_cells) + " \\\\")
+        if group is not None and group_last.get(group.get("label", "")) == r:
+            sep = group.get("separator")
+            if sep == "midrule":
+                lines.append(mid_rule)
+            elif sep == "hline":
+                lines.append("\\hline")
 
     lines.append(bottom_rule)
 

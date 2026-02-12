@@ -81,8 +81,34 @@ def render_markdown(
 
     header = [_title_case(table["row_field"])] + [str(c) for c in cols]
 
+    col_groups = spec.get("cols", {}).get("groups") or []
+    group_header = None
+    if col_groups:
+        group_lookup = {}
+        for group in col_groups:
+            for member in group.get("members", []):
+                group_lookup[member] = group.get("label", "")
+        group_header = [""] + [group_lookup.get(c, "") for c in cols]
+
     body_rows: List[List[str]] = []
+    row_groups = spec.get("rows", {}).get("groups") or []
+    group_map = {}
+    group_last = {}
+    for group in row_groups:
+        members = [m for m in group.get("members", []) if m in rows]
+        for member in members:
+            group_map[member] = group
+        if members:
+            group_last[group.get("label", "")] = members[-1]
+
+    current_group = None
     for r in rows:
+        group = group_map.get(r)
+        if group is not None and group is not current_group:
+            label = group.get("label", "")
+            group_row = [f"{bold_token}{label}{bold_token}"] + ["" for _ in cols]
+            body_rows.append(group_row)
+            current_group = group
         row = [str(r)]
         for c in cols:
             cell = cells.get((r, c))
@@ -97,6 +123,9 @@ def render_markdown(
                         text = _apply_style(text, style, bold_token, underline_token)
             row.append(text)
         body_rows.append(row)
+        if group is not None and group_last.get(group.get("label", "")) == r:
+            if group.get("separator"):
+                body_rows.append(["" for _ in header])
 
     alignment = output_md.get("alignment", "auto")
     if alignment == "auto":
@@ -112,6 +141,8 @@ def render_markdown(
     if output_md.get("include_caption") and spec["latex"].get("caption"):
         lines.append(f"*{spec['latex']['caption']}*")
 
+    if group_header:
+        lines.append(separator + " " + (" {} ".format(separator)).join(group_header) + " " + separator)
     lines.append(separator + " " + (" {} ".format(separator)).join(header) + " " + separator)
     lines.append(separator + " " + (" {} ".format(separator)).join(align_row) + " " + separator)
     for row in body_rows:
