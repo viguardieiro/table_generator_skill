@@ -22,6 +22,7 @@ description: Generate publication-ready LaTeX or Markdown tables from long-form 
    - Fallback: `python -m table_generator.cli render --records records.json --spec spec.json --out table.tex`
    - Optional export (machine-readable stats): `tablegen render --records records.json --spec spec.json --export stats.json`
    - Optional preview (HTML): `tablegen render --records records.json --spec spec.json --preview --open`
+     - If auto-open fails, open the generated HTML file manually.
 4. Return output.
    - Return the rendered table and any execution notes.
    - For LaTeX output, include required packages from `skills/table-generator/resources/latex_preamble.md`.

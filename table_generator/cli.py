@@ -7,6 +7,8 @@ import json
 import sys
 import tempfile
 import subprocess
+import sys
+import shutil
 from typing import Any, Dict, List
 
 from .api import render_table
@@ -71,7 +73,20 @@ def cmd_render(args: argparse.Namespace) -> int:
     if args.preview and args.open:
         target = out_path
         if target:
-            subprocess.run(["open", target], check=False)
+            opener = None
+            if sys.platform.startswith("darwin"):
+                opener = "open"
+            elif sys.platform.startswith("linux"):
+                opener = "xdg-open"
+            elif sys.platform.startswith("win"):
+                opener = "start"
+            if opener and (opener == "start" or shutil.which(opener)):
+                if opener == "start":
+                    subprocess.run(["cmd", "/c", "start", "", target], check=False)
+                else:
+                    subprocess.run([opener, target], check=False)
+            else:
+                print("Warning: could not auto-open preview; please open the HTML file manually.", file=sys.stderr)
 
     if args.export:
         export_rows = build_export_rows(table, highlights, markers)
@@ -111,7 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
     render.add_argument(
         "--open",
         action="store_true",
-        help="Open the HTML preview in the default browser (macOS only)",
+        help="Open the HTML preview in the default browser (best-effort)",
     )
     render.add_argument(
         "--export",

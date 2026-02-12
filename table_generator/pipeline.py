@@ -150,11 +150,13 @@ def _aggregate(records: List[Dict[str, Any]], spec: Dict[str, Any]) -> Dict[str,
     return table
 
 
-def _direction_for_column(spec: Dict[str, Any], column: Any) -> str:
+def _direction_for_column(spec: Dict[str, Any], column: Any, delta_map: Dict[Any, Any] | None = None) -> str:
     direction = spec["metric"]["direction"]
     if isinstance(direction, dict):
         if column in direction:
             return direction[column]
+        if delta_map and column in delta_map and delta_map[column] in direction:
+            return direction[delta_map[column]]
         raise ValueError(f"Missing direction for column '{column}'")
     return direction
 
@@ -166,7 +168,7 @@ def _apply_row_order_by(table: Dict[str, Any], spec: Dict[str, Any]) -> List[Any
         return table["rows"]
 
     column = order_by["column"]
-    direction = order_by.get("direction") or _direction_for_column(spec, column)
+    direction = order_by.get("direction") or _direction_for_column(spec, column, table.get("delta_map"))
     cells = table["cells"]
 
     def key_fn(row: Any) -> Tuple[int, float]:
@@ -258,7 +260,7 @@ def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tup
 
     if scope == "column":
         for c in cols:
-            dir_value = _direction_for_column(spec, c) if isinstance(direction, dict) else direction
+            dir_value = _direction_for_column(spec, c, table.get("delta_map")) if isinstance(direction, dict) else direction
             items = []
             for r in rows:
                 if r in summary_rows or c in summary_cols or c in delta_cols:
@@ -322,7 +324,7 @@ def compute_significance(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tu
     for c in cols:
         if c in summary_cols or c in delta_cols:
             continue
-        dir_value = _direction_for_column(spec, c) if isinstance(direction, dict) else direction
+        dir_value = _direction_for_column(spec, c, table.get("delta_map")) if isinstance(direction, dict) else direction
         base_cell = cells.get((baseline, c))
         if base_cell is None:
             continue
@@ -423,7 +425,7 @@ def _apply_delta_columns(table: Dict[str, Any], spec: Dict[str, Any]) -> None:
 
     def compute_delta(value: float, base: float, col: Any) -> float:
         if use_direction:
-            dir_value = _direction_for_column(spec, col)
+            dir_value = _direction_for_column(spec, col, table.get("delta_map"))
             diff = value - base
             return diff if dir_value == "max" else -diff
         return value - base

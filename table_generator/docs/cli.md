@@ -15,7 +15,7 @@ Arguments:
 - `--spec`: spec JSON file.
 - `--out`: optional output path. If omitted, output is printed to stdout.
 - `--preview`: render an HTML preview instead of the main output.
-- `--open`: open the HTML preview in the default browser (macOS only). If `--out` is not set, a temp file is created.
+- `--open`: open the HTML preview in the default browser (best-effort). If `--out` is not set, a temp file is created.
 - `--export`: write computed stats to a JSON or CSV file.
 - `--export-format`: `json` or `csv` (defaults to JSON unless path ends with `.csv`).
 
