@@ -339,3 +339,4 @@ Fields:
 - `label` (string, optional, default: none)
 - `escape` (bool, optional, default: `true`)
 - `resize` (string or null, optional, default: `null`): wrapper such as `"\\resizebox{\\linewidth}{!}"`.
+- `footnotes` (list[string], optional, default: none): plain-text notes rendered under the table in `\\footnotesize`.

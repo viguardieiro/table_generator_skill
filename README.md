@@ -20,6 +20,7 @@ This repo is a **skill for agents** that generates publication-ready LaTeX or Ma
 - LaTeX details: alignment, table environment on/off, optional caption/label
 - Delta vs baseline columns (absolute or relative)
 - Export computed stats (JSON/CSV) with flags like highlight/significance
+- Plain-text LaTeX footnotes (e.g., significance notes or aggregation details)
 
 ## How to use with an agent (Claude Code / Codex)
 
@@ -46,11 +47,8 @@ Important: the agent is instructed to treat raw results as **read-only** and onl
 
 ## Potential next features
 
-- Multiple metrics per table (single spec, adjacent metric columns)
-- Delta vs baseline columns
 - Per-column sorting (auto-sort by a chosen column)
 - Row/column filtering by regex or allowlist
-- Auto-generated footnotes/notes (e.g., “mean ± std over 5 seeds”)
 - Regex or partial-match renaming rules
 
 ## If you want the package/CLI docs

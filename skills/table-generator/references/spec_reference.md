@@ -231,6 +231,7 @@ For `"ci"`:
 - `alignment`: column alignment string
 - `escape`: escape LaTeX special chars if `true`
 - `resize`: optional wrapper (e.g., `"\\resizebox{\\linewidth}{!}"`)
+- `footnotes`: list of plain-text notes rendered under the table in `\footnotesize`
 
 ## Ordering by performance
 

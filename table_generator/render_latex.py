@@ -246,6 +246,11 @@ def render_latex(
             table_lines.append(f"\\caption{{{_escape_latex(caption) if escape else caption}}}")
         if label:
             table_lines.append(f"\\label{{{_escape_latex(label) if escape else label}}}")
+        footnotes = latex_spec.get("footnotes")
+        if footnotes:
+            notes = " ".join(footnotes)
+            notes = _escape_latex(notes) if escape else notes
+            table_lines.append(f"{{\\\\footnotesize {notes}}}")
         table_lines.append("\\end{table}")
         text = "\n".join(table_lines)
     else:

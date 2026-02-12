@@ -188,4 +188,8 @@ def render_html(
 
     parts.append("</tbody>")
     parts.append("</table>")
+    footnotes = spec.get("latex", {}).get("footnotes")
+    if footnotes:
+        notes = " ".join(footnotes)
+        parts.append(f"<div style=\"font-size: 0.9em; margin-top: 6px;\">{html_escape(notes)}</div>")
     return "\n".join(parts)

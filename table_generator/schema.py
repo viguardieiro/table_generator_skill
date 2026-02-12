@@ -226,6 +226,16 @@ def validate_spec(spec: Dict[str, Any]) -> Dict[str, Any]:
         if direction is not None and direction not in VALID_DIRECTION:
             raise _path_err("spec.rows.order_by.direction", "Must be 'min' or 'max'")
 
+    # LaTeX footnotes
+    latex = merged.get("latex", {})
+    footnotes = latex.get("footnotes")
+    if footnotes is not None:
+        if not isinstance(footnotes, list):
+            raise _path_err("spec.latex.footnotes", "Must be a list of strings")
+        for idx, note in enumerate(footnotes):
+            if not isinstance(note, str):
+                raise _path_err(f"spec.latex.footnotes[{idx}]", "Must be a string")
+
     # Significance markers
     sig = merged.get("significance")
     if sig is not None:

@@ -21,6 +21,7 @@ description: Generate publication-ready LaTeX or Markdown tables from long-form 
    - Prefer CLI: `tablegen render --records records.json --spec spec.json --out table.tex`
    - Fallback: `python -m table_generator.cli render --records records.json --spec spec.json --out table.tex`
    - Optional export (machine-readable stats): `tablegen render --records records.json --spec spec.json --export stats.json`
+   - Optional preview (HTML): `tablegen render --records records.json --spec spec.json --preview --open`
 4. Return output.
    - Return the rendered table and any execution notes.
    - For LaTeX output, include required packages from `skills/table-generator/resources/latex_preamble.md`.
@@ -62,6 +63,9 @@ Use these rules:
 - For row/column mean summaries, use `aggregate.row_summary` / `aggregate.col_summary` (see reference).
 - For significance markers, use the `significance` block (see reference).
 - For delta vs baseline columns, use the `delta` block (see reference).
+- Delta columns and summary rows/cols are excluded from highlighting and significance tests.
+- Markdown output does not show true multi-level headers for column groups; use HTML preview or LaTeX if grouping matters.
+- Use `latex.footnotes` for plain-text notes such as significance definitions or aggregation details (e.g., mean ± std over 5 seeds).
 
 ## Handle Errors
 
