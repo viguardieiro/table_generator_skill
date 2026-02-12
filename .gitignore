@@ -8,3 +8,4 @@ __pycache__/
 .venv/
 venv/
 table_generator.egg-info/
+example/
