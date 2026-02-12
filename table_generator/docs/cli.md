@@ -14,6 +14,7 @@ Arguments:
 - `--records`: JSON or JSONL records file (long-form).
 - `--spec`: spec JSON file.
 - `--out`: optional output path. If omitted, output is printed to stdout.
+- `--preview`: render an HTML preview instead of the main output.
 
 Behavior:
 - Exits non-zero on schema errors.

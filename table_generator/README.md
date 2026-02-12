@@ -50,6 +50,12 @@ tablegen render --records records.json --spec spec.json --out table.tex
 
 3) Paste the output into your paper or README.
 
+Optional preview (helpful for checking formatting and groups):
+
+```bash
+tablegen render --records records.json --spec spec.json --preview --out preview.html
+```
+
 ## Docs
 
 - API reference: `table_generator/docs/api.md`

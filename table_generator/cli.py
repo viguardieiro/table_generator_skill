@@ -8,8 +8,10 @@ import sys
 from typing import Any, Dict, List
 
 from .api import render_table
-from .schema import SchemaError
+from .schema import SchemaError, validate_spec
 from .templates import DEFAULT_RECORDS, DEFAULT_SPEC
+from .pipeline import build_table, compute_highlights
+from .render_html import render_html
 
 
 def _load_json(path: str) -> Any:
@@ -37,7 +39,14 @@ def cmd_render(args: argparse.Namespace) -> int:
     try:
         records = _load_records(args.records)
         spec = _load_json(args.spec)
-        result = render_table(records, spec)
+        validated = validate_spec(spec)
+        if args.preview:
+            table = build_table(records, validated)
+            highlights = compute_highlights(table, validated)
+            text = render_html(table, highlights, validated)
+            result = {"text": text}
+        else:
+            result = render_table(records, validated)
     except (SchemaError, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 2
@@ -68,6 +77,11 @@ def build_parser() -> argparse.ArgumentParser:
     render.add_argument("--records", required=True, help="Path to records JSON/JSONL")
     render.add_argument("--spec", required=True, help="Path to spec JSON")
     render.add_argument("--out", required=False, help="Optional output path")
+    render.add_argument(
+        "--preview",
+        action="store_true",
+        help="Render an HTML preview instead of the main output",
+    )
     render.set_defaults(func=cmd_render)
 
     template = subparsers.add_parser("template", help="Emit a default spec + records example")
