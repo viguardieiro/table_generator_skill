@@ -60,6 +60,7 @@ Use these rules:
 - If metrics have mixed directions (e.g., accuracy vs loss), use a per-column `metric.direction` map (see reference).
 - For row/column mean summaries, use `aggregate.row_summary` / `aggregate.col_summary` (see reference).
 - For significance markers, use the `significance` block (see reference).
+- For delta vs baseline columns, use the `delta` block (see reference).
 
 ## Handle Errors
 

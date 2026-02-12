@@ -18,6 +18,8 @@ def _format_number(value: float, decimals: int, trailing_zeros: bool, scientific
 
 
 def _cell_to_text(cell: Dict[str, Any], spec: Dict[str, Any], column: Any) -> str:
+    if cell.get("delta"):
+        return _format_delta(cell, spec)
     fmt = _format_for_column(spec, column)
     mode = fmt["mode"]
     mean_decimals = fmt.get("mean_decimals", 2)
@@ -48,6 +50,26 @@ def _cell_to_text(cell: Dict[str, Any], spec: Dict[str, Any], column: Any) -> st
     lo_text = _format_number(lo, unc_decimals, trailing, scientific)
     hi_text = _format_number(hi, unc_decimals, trailing, scientific)
     return f"{mean_text} [{lo_text}, {hi_text}]"
+
+
+def _format_delta(cell: Dict[str, Any], spec: Dict[str, Any]) -> str:
+    delta_spec = spec.get("delta", {})
+    fmt = delta_spec.get("format", {})
+    decimals = fmt.get("decimals", spec["format"].get("mean_decimals", 2))
+    show_plus = fmt.get("show_plus", True)
+    percent = fmt.get("percent")
+    if percent is None:
+        percent = cell.get("delta_mode") == "relative"
+
+    value = cell["center"]
+    if percent:
+        value = value * 100
+    text = _format_number(value, decimals, True, False)
+    if show_plus and value > 0:
+        text = f"+{text}"
+    if percent:
+        text = f"{text}%"
+    return text
 
 
 def _apply_style(text: str, style: str, bold_token: str, underline_token: str) -> str:

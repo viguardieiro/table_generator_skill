@@ -139,8 +139,11 @@ def _aggregate(records: List[Dict[str, Any]], spec: Dict[str, Any]) -> Dict[str,
         "cells": cells,
         "row_field": row_field,
         "col_field": col_field,
+        "delta_cols": [],
+        "delta_map": {},
     }
     table["rows"] = _apply_row_order_by(table, spec)
+    _apply_delta_columns(table, spec)
     _validate_groups(table["rows"], rows_spec.get("groups"), axis="rows")
     _validate_groups(table["cols"], cols_spec.get("groups"), axis="cols")
     _apply_summaries(table, spec)
@@ -221,10 +224,7 @@ def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tup
     cols = table["cols"]
     summary_rows = set(table.get("summary_rows", []))
     summary_cols = set(table.get("summary_cols", []))
-    summary_rows = set(table.get("summary_rows", []))
-    summary_cols = set(table.get("summary_cols", []))
-    summary_rows = set(table.get("summary_rows", []))
-    summary_cols = set(table.get("summary_cols", []))
+    delta_cols = set(table.get("delta_cols", []))
 
     highlights: Dict[Tuple[Any, Any], str] = {}
 
@@ -261,7 +261,7 @@ def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tup
             dir_value = _direction_for_column(spec, c) if isinstance(direction, dict) else direction
             items = []
             for r in rows:
-                if r in summary_rows or c in summary_cols:
+                if r in summary_rows or c in summary_cols or c in delta_cols:
                     continue
                 cell = cells.get((r, c))
                 if cell is None:
@@ -274,7 +274,7 @@ def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tup
         for r in rows:
             items = []
             for c in cols:
-                if r in summary_rows or c in summary_cols:
+                if r in summary_rows or c in summary_cols or c in delta_cols:
                     continue
                 cell = cells.get((r, c))
                 if cell is None:
@@ -289,7 +289,7 @@ def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tup
             direction = next(iter(unique))
         items = []
         for (r, c), cell in cells.items():
-            if r in summary_rows or c in summary_cols:
+            if r in summary_rows or c in summary_cols or c in delta_cols:
                 continue
             items.append((r, c, cell["center"]))
         apply_group(items, direction)
@@ -313,13 +313,14 @@ def compute_significance(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tu
     cols = table["cols"]
     summary_rows = set(table.get("summary_rows", []))
     summary_cols = set(table.get("summary_cols", []))
+    delta_cols = set(table.get("delta_cols", []))
     cells = table["cells"]
 
     if baseline not in rows:
         return markers
 
     for c in cols:
-        if c in summary_cols:
+        if c in summary_cols or c in delta_cols:
             continue
         dir_value = _direction_for_column(spec, c) if isinstance(direction, dict) else direction
         base_cell = cells.get((baseline, c))
@@ -365,7 +366,11 @@ def _apply_summaries(table: Dict[str, Any], spec: Dict[str, Any]) -> None:
         else:
             table["cols"].append(summary_col)
         for r in table["rows"]:
-            values = [cells[(r, c)]["center"] for c in table["cols"] if (r, c) in cells and c != summary_col]
+            values = [
+                cells[(r, c)]["center"]
+                for c in table["cols"]
+                if (r, c) in cells and c != summary_col and c not in table.get("delta_cols", [])
+            ]
             if not values:
                 continue
             center = mean(values) if stat == "mean" else median(values)
@@ -382,8 +387,94 @@ def _apply_summaries(table: Dict[str, Any], spec: Dict[str, Any]) -> None:
         else:
             table["rows"].append(summary_row)
         for c in table["cols"]:
-            values = [cells[(r, c)]["center"] for r in table["rows"] if (r, c) in cells and r != summary_row]
+            if c in table.get("delta_cols", []):
+                continue
+            values = [
+                cells[(r, c)]["center"]
+                for r in table["rows"]
+                if (r, c) in cells and r != summary_row
+            ]
             if not values:
                 continue
             center = mean(values) if stat == "mean" else median(values)
             cells[(summary_row, c)] = {"center": center, "n": len(values), "unc": None, "ci": None, "values": values}
+
+
+def _apply_delta_columns(table: Dict[str, Any], spec: Dict[str, Any]) -> None:
+    delta = spec.get("delta")
+    if not delta:
+        return
+
+    baseline = delta["baseline"]
+    if baseline not in table["rows"]:
+        return
+
+    mode = delta.get("mode", "absolute")
+    position = delta.get("position", "after")
+    suffix = delta.get("suffix", " Δ")
+    use_direction = delta.get("use_direction", True)
+    include = set(delta.get("columns", [])) if delta.get("columns") else None
+
+    cells = table["cells"]
+    cols = table["cols"]
+    new_cols = []
+    delta_cols = []
+    delta_map = {}
+
+    def compute_delta(value: float, base: float, col: Any) -> float:
+        if use_direction:
+            dir_value = _direction_for_column(spec, col)
+            diff = value - base
+            return diff if dir_value == "max" else -diff
+        return value - base
+
+    for col in cols:
+        new_cols.append(col)
+        if include is not None and col not in include:
+            continue
+        delta_col = f"{col}{suffix}"
+        new_cols.append(delta_col)
+        delta_cols.append(delta_col)
+        delta_map[delta_col] = col
+
+        for r in table["rows"]:
+            base_cell = cells.get((baseline, col))
+            cell = cells.get((r, col))
+            if base_cell is None or cell is None:
+                continue
+            delta_val = compute_delta(cell["center"], base_cell["center"], col)
+            if mode == "relative":
+                if base_cell["center"] == 0:
+                    continue
+                delta_val = delta_val / abs(base_cell["center"])
+            cells[(r, delta_col)] = {
+                "center": delta_val,
+                "n": None,
+                "unc": None,
+                "ci": None,
+                "values": None,
+                "delta": True,
+                "delta_mode": mode,
+            }
+
+    if position == "end":
+        base_cols = [c for c in cols if c not in delta_cols]
+        delta_only = [c for c in new_cols if c in delta_cols]
+        table["cols"] = base_cols + delta_only
+    else:
+        table["cols"] = new_cols
+
+    table["delta_cols"] = delta_cols
+    table["delta_map"] = delta_map
+
+    groups = spec.get("cols", {}).get("groups") or []
+    if groups and position == "after":
+        for group in groups:
+            members = group.get("members", [])
+            updated = []
+            for m in members:
+                updated.append(m)
+                for dcol, base in delta_map.items():
+                    if base == m:
+                        updated.append(dcol)
+            group["members"] = updated

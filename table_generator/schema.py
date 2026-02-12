@@ -246,4 +246,23 @@ def validate_spec(spec: Dict[str, Any]) -> Dict[str, Any]:
         if not isinstance(n_boot, int) or n_boot <= 0:
             raise _path_err("spec.significance.n_boot", "n_boot must be a positive int")
 
+    # Delta vs baseline columns
+    delta = merged.get("delta")
+    if delta is not None:
+        if not isinstance(delta, dict):
+            raise _path_err("spec.delta", "Must be an object")
+        if "baseline" not in delta:
+            raise _path_err("spec.delta.baseline", "Missing required field")
+        mode = delta.get("mode", "absolute")
+        if mode not in ("absolute", "relative"):
+            raise _path_err("spec.delta.mode", "Must be 'absolute' or 'relative'")
+        position = delta.get("position", "after")
+        if position not in ("after", "end"):
+            raise _path_err("spec.delta.position", "Must be 'after' or 'end'")
+        if "columns" in delta and not isinstance(delta["columns"], list):
+            raise _path_err("spec.delta.columns", "Must be a list of column labels")
+        fmt = delta.get("format")
+        if fmt is not None and not isinstance(fmt, dict):
+            raise _path_err("spec.delta.format", "Must be an object")
+
     return merged

@@ -159,6 +159,10 @@ Optional (nice-to-have):
 
 - Significance markers vs a baseline (bootstrap CI on difference)
 
+### Delta Columns
+
+- Add delta vs baseline columns (absolute or relative)
+
 ## Status
 
 This project is a minimal but extensible table generator.

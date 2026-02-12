@@ -171,6 +171,30 @@ For `"ci"`:
 - `seed`: bootstrap seed
 - `symbol`: appended marker
 
+## Delta vs baseline columns
+
+```json
+"delta": {
+  "baseline": "Baseline",
+  "mode": "absolute",
+  "position": "after",
+  "suffix": " Δ",
+  "use_direction": true,
+  "columns": ["acc", "f1", "loss"],
+  "format": { "decimals": 3, "show_plus": true, "percent": false }
+}
+```
+
+- `baseline`: row label to compare against
+- `mode`: `"absolute"` or `"relative"`
+- `position`: `"after"` (insert after each column) or `"end"` (append at end)
+- `suffix`: appended to column label
+- `use_direction`: if true, deltas are flipped so “better” is positive
+- `columns`: optional subset of columns to include
+- `format.decimals`: decimal places for delta
+- `format.show_plus`: include `+` for positive
+- `format.percent`: render as percent (defaults to true for relative mode)
+
 ## Output
 
 ```json

@@ -18,6 +18,7 @@ This repo is a **skill for agents** that generates publication-ready LaTeX or Ma
 - Formatting: decimal precision for mean/uncertainty, `mean ± unc` or `mean [lo, hi]`
 - Output format: LaTeX (booktabs-style) or Markdown (pipe tables)
 - LaTeX details: alignment, table environment on/off, optional caption/label
+- Delta vs baseline columns (absolute or relative)
 
 ## How to use with an agent (Claude Code / Codex)
 

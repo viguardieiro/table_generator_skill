@@ -127,3 +127,24 @@
   "output": { "format": "latex" }
 }
 ```
+
+## 7) Delta vs baseline columns
+
+```json
+{
+  "rows": { "field": "model" },
+  "cols": { "field": "dataset" },
+  "metric": { "field": "metric", "value": "acc", "direction": "max" },
+  "aggregate": { "over": ["seed"], "stat": "mean", "uncertainty": { "type": "std" } },
+  "delta": {
+    "baseline": "Baseline",
+    "mode": "absolute",
+    "position": "after",
+    "suffix": " Δ",
+    "use_direction": true,
+    "format": { "decimals": 3, "show_plus": true }
+  },
+  "format": { "mode": "pm", "mean_decimals": 2, "unc_decimals": 2 },
+  "output": { "format": "latex" }
+}
+```

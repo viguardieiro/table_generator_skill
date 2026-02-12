@@ -223,6 +223,41 @@ Behavior:
 - `ties=first`: highlight first occurrence only.
 - `ties=none`: if there is a tie for best or second-best, skip highlighting for that rank.
 
+## `delta`
+
+Add delta (difference) columns vs a baseline row.
+
+```json
+"delta": {
+  "baseline": "Baseline",
+  "mode": "absolute",
+  "position": "after",
+  "suffix": " Δ",
+  "use_direction": true,
+  "columns": ["acc", "f1", "loss"],
+  "format": { "decimals": 3, "show_plus": true, "percent": false }
+}
+```
+
+Fields:
+- `baseline` (string, required): row label to compare against.
+- `mode` (string, optional, default: `"absolute"`): `"absolute"` or `"relative"`.
+- `position` (string, optional, default: `"after"`): `"after"` (insert after each column) or `"end"` (append at end).
+- `suffix` (string, optional, default: `" Δ"`): appended to column label.
+- `use_direction` (bool, optional, default: `true`): if `true`, deltas are flipped so “better” is positive.
+- `columns` (list[string], optional): subset of columns to create deltas for. If omitted, all columns.
+- `format` (object, optional): formatting for delta cells.
+
+`delta.format` fields:
+- `decimals` (int, optional, default: `format.mean_decimals`).
+- `show_plus` (bool, optional, default: `true`).
+- `percent` (bool, optional, default: `mode == "relative"`).
+
+Behavior:
+- Delta cells do not show uncertainty.
+- Summary rows/cols and highlighting ignore delta columns.
+- If column groups are defined and `position="after"`, delta columns are inserted into the same group.
+
 ## `significance`
 
 Add significance markers relative to a baseline row (per column).
