@@ -42,6 +42,15 @@ Important: the agent is instructed to treat raw results as **read-only** and onl
 - "Generate a LaTeX table from `results.json` using the table-generator skill."
 - "Create a spec for my results and render a Markdown table."
 
+## Potential next features
+
+- Simple multi-level column headers / column groups
+- Multiple metrics per table (single spec, adjacent metric columns)
+- Row/column filtering by regex or allowlist
+- Add a per-row “Mean” column across datasets
+- Auto-generated footnotes/notes (e.g., “mean ± std over 5 seeds”)
+- Regex or partial-match renaming rules
+
 ## If you want the package/CLI docs
 
 See `table_generator/README.md`.

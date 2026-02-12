@@ -47,6 +47,7 @@ Minimum required fields:
 General notes:
 - `metric.field` + `metric.value` filter records; they do not create columns. If you need multiple metrics as columns, see the reference.
 - For uncertainty, set `aggregate.uncertainty.type` (`none`, `std`, `sem`, or `ci`). CI requires extra fields (method, level, n_boot).
+- If metrics have mixed directions (e.g., accuracy vs loss), use a per-column `metric.direction` map (see reference).
 
 ## Error handling
 

@@ -17,8 +17,8 @@ def _format_number(value: float, decimals: int, trailing_zeros: bool, scientific
     return text
 
 
-def _cell_to_text(cell: Dict[str, Any], spec: Dict[str, Any]) -> str:
-    fmt = spec["format"]
+def _cell_to_text(cell: Dict[str, Any], spec: Dict[str, Any], column: Any) -> str:
+    fmt = _format_for_column(spec, column)
     mode = fmt["mode"]
     mean_decimals = fmt.get("mean_decimals", 2)
     unc_decimals = fmt.get("unc_decimals", 2)
@@ -89,7 +89,7 @@ def render_markdown(
             if cell is None:
                 text = fmt.get("missing", "--")
             else:
-                text = _cell_to_text(cell, spec)
+                text = _cell_to_text(cell, spec, c)
                 highlight = highlights.get((r, c))
                 if highlight:
                     style = highlight_spec.get(highlight, {}).get("style")
@@ -118,3 +118,13 @@ def render_markdown(
         lines.append(separator + " " + (" {} ".format(separator)).join(row) + " " + separator)
 
     return "\n".join(lines)
+
+
+def _format_for_column(spec: Dict[str, Any], column: Any) -> Dict[str, Any]:
+    fmt = spec["format"]
+    overrides = fmt.get("overrides", {})
+    if column in overrides:
+        merged = dict(fmt)
+        merged.update(overrides[column])
+        return merged
+    return fmt

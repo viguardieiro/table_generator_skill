@@ -124,13 +124,44 @@ def _aggregate(records: List[Dict[str, Any]], spec: Dict[str, Any]) -> Dict[str,
             cell["ci"] = (lo, hi)
         cells[key] = cell
 
-    return {
+    table = {
         "rows": rows,
         "cols": cols,
         "cells": cells,
         "row_field": row_field,
         "col_field": col_field,
     }
+    table["rows"] = _apply_row_order_by(table, spec)
+    return table
+
+
+def _direction_for_column(spec: Dict[str, Any], column: Any) -> str:
+    direction = spec["metric"]["direction"]
+    if isinstance(direction, dict):
+        if column in direction:
+            return direction[column]
+        raise ValueError(f"Missing direction for column '{column}'")
+    return direction
+
+
+def _apply_row_order_by(table: Dict[str, Any], spec: Dict[str, Any]) -> List[Any]:
+    rows_spec = spec.get("rows", {})
+    order_by = rows_spec.get("order_by")
+    if not order_by:
+        return table["rows"]
+
+    column = order_by["column"]
+    direction = order_by.get("direction") or _direction_for_column(spec, column)
+    cells = table["cells"]
+
+    def key_fn(row: Any) -> Tuple[int, float]:
+        cell = cells.get((row, column))
+        if cell is None:
+            return (1, 0.0)
+        return (0, cell["center"])
+
+    reverse = direction == "max"
+    return sorted(table["rows"], key=key_fn, reverse=reverse)
 
 
 def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tuple[Any, Any], str]:
@@ -142,8 +173,8 @@ def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tup
     direction = spec["metric"]["direction"]
     ties = highlight.get("ties", "all")
 
-    def sorted_items(items: List[Tuple[Any, Any, float]]) -> List[Tuple[Any, Any, float]]:
-        reverse = direction == "max"
+    def sorted_items(items: List[Tuple[Any, Any, float]], dir_value: str) -> List[Tuple[Any, Any, float]]:
+        reverse = dir_value == "max"
         return sorted(items, key=lambda x: x[2], reverse=reverse)
 
     cells = table["cells"]
@@ -152,14 +183,16 @@ def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tup
 
     highlights: Dict[Tuple[Any, Any], str] = {}
 
-    def apply_group(items: List[Tuple[Any, Any, float]]):
+    def apply_group(items: List[Tuple[Any, Any, float]], dir_value: str):
         if not items:
             return
-        ordered = sorted_items(items)
+        ordered = sorted_items(items, dir_value)
         best_val = ordered[0][2]
         best_items = [x for x in ordered if x[2] == best_val]
         if ties == "first":
             best_items = best_items[:1]
+        if ties == "none" and len(best_items) > 1:
+            return
         for r, c, _ in best_items:
             highlights[(r, c)] = "best"
 
@@ -173,19 +206,24 @@ def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tup
         second_group = [x for x in second_items if x[2] == second_val]
         if ties == "first":
             second_group = second_group[:1]
+        if ties == "none" and len(second_group) > 1:
+            return
         for r, c, _ in second_group:
             highlights.setdefault((r, c), "second")
 
     if scope == "column":
         for c in cols:
+            dir_value = _direction_for_column(spec, c) if isinstance(direction, dict) else direction
             items = []
             for r in rows:
                 cell = cells.get((r, c))
                 if cell is None:
                     continue
                 items.append((r, c, cell["center"]))
-            apply_group(items)
+            apply_group(items, dir_value)
     elif scope == "row":
+        if isinstance(direction, dict):
+            raise ValueError("Row-scope highlighting does not support per-column directions")
         for r in rows:
             items = []
             for c in cols:
@@ -193,11 +231,16 @@ def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tup
                 if cell is None:
                     continue
                 items.append((r, c, cell["center"]))
-            apply_group(items)
+            apply_group(items, direction)
     else:  # table
+        if isinstance(direction, dict):
+            unique = set(direction.values())
+            if len(unique) > 1:
+                raise ValueError("Table-scope highlighting requires a single direction")
+            direction = next(iter(unique))
         items = []
         for (r, c), cell in cells.items():
             items.append((r, c, cell["center"]))
-        apply_group(items)
+        apply_group(items, direction)
 
     return highlights

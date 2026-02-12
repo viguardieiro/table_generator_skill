@@ -45,6 +45,20 @@ This file provides the full spec reference for `table_generator`. If you are uns
 - `metric.field` and `metric.value` filter records; only matching records are included.
 - `direction` controls best/second-best highlighting.
 
+Per-column direction (for mixed metrics):
+```json
+"metric": {
+  "field": "metric",
+  "value": "result",
+  "direction": {
+    "Accuracy": "max",
+    "Loss": "min"
+  }
+}
+```
+
+If you provide a direction map, include an entry for every column that will be highlighted or ordered.
+
 **Multiple metrics as columns**
 
 If you want multiple metrics as columns, store metric name in the column field and use a dummy `metric` value for filtering.
@@ -96,12 +110,16 @@ For `"ci"`:
   "unc_decimals": 2,
   "trailing_zeros": true,
   "scientific": false,
-  "missing": "--"
+  "missing": "--",
+  "overrides": {
+    "Loss": { "mean_decimals": 3, "unc_decimals": 3 }
+  }
 }
 ```
 
 - `mode`: `"pm"` or `"ci_brackets"`
 - `missing`: text for missing cells
+- `overrides`: per-column formatting overrides
 
 ## Highlighting
 
@@ -116,7 +134,7 @@ For `"ci"`:
 
 - `scope`: `"column"`, `"row"`, or `"table"`
 - `style`: `"bold"`, `"underline"`, or `"cellcolor:<color>"`
-- `ties`: `"all"` or `"first"`
+- `ties`: `"all"`, `"first"`, or `"none"`
 
 ## Output
 
@@ -154,3 +172,15 @@ For `"ci"`:
 - `alignment`: column alignment string
 - `escape`: escape LaTeX special chars if `true`
 - `resize`: optional wrapper (e.g., `"\\resizebox{\\linewidth}{!}"`)
+
+## Ordering by performance
+
+```json
+"rows": {
+  "field": "model",
+  "order_by": { "column": "MNLI", "direction": "max" }
+}
+```
+
+- `order_by.column`: column label to sort by
+- `order_by.direction`: optional; defaults to the metric direction for that column

@@ -50,7 +50,7 @@ VALID_CI_METHODS = {"bootstrap_percentile"}
 VALID_DIRECTION = {"min", "max"}
 VALID_HIGHLIGHT_SCOPE = {"column", "row", "table"}
 VALID_HIGHLIGHT_STYLE = {"bold", "underline"}
-VALID_TIES = {"all", "first"}
+VALID_TIES = {"all", "first", "none"}
 
 
 def _path_err(path: str, message: str) -> SchemaError:
@@ -92,8 +92,18 @@ def validate_spec(spec: Dict[str, Any]) -> Dict[str, Any]:
         raise _path_err("spec.metric.field", "Missing required field")
     if "value" not in metric:
         raise _path_err("spec.metric.value", "Missing required field")
-    if metric.get("direction") not in VALID_DIRECTION:
-        raise _path_err("spec.metric.direction", "Must be 'min' or 'max'")
+    direction = metric.get("direction")
+    if isinstance(direction, str):
+        if direction not in VALID_DIRECTION:
+            raise _path_err("spec.metric.direction", "Must be 'min' or 'max'")
+    elif isinstance(direction, dict):
+        for key, value in direction.items():
+            if value not in VALID_DIRECTION:
+                raise _path_err(
+                    f"spec.metric.direction.{key}", "Must be 'min' or 'max'"
+                )
+    else:
+        raise _path_err("spec.metric.direction", "Must be 'min'/'max' or a map")
 
     # Aggregate
     agg = merged["aggregate"]
@@ -123,6 +133,13 @@ def validate_spec(spec: Dict[str, Any]) -> Dict[str, Any]:
     fmt = merged.get("format", {})
     if fmt.get("mode") not in VALID_FORMAT_MODES:
         raise _path_err("spec.format.mode", "Unsupported format mode")
+    overrides = fmt.get("overrides")
+    if overrides is not None:
+        if not isinstance(overrides, dict):
+            raise _path_err("spec.format.overrides", "Must be an object")
+        for key, value in overrides.items():
+            if not isinstance(value, dict):
+                raise _path_err(f"spec.format.overrides.{key}", "Must be an object")
 
     # Output
     output = merged.get("output", {})
@@ -154,5 +171,17 @@ def validate_spec(spec: Dict[str, Any]) -> Dict[str, Any]:
     ranking = merged.get("ranking")
     if ranking and ranking.get("enabled"):
         raise _path_err("spec.ranking", "Ranking is not implemented yet")
+
+    # Row ordering by performance (optional)
+    rows = merged.get("rows", {})
+    order_by = rows.get("order_by")
+    if order_by is not None:
+        if not isinstance(order_by, dict):
+            raise _path_err("spec.rows.order_by", "Must be an object")
+        if "column" not in order_by:
+            raise _path_err("spec.rows.order_by.column", "Missing required field")
+        direction = order_by.get("direction")
+        if direction is not None and direction not in VALID_DIRECTION:
+            raise _path_err("spec.rows.order_by.direction", "Must be 'min' or 'max'")
 
     return merged

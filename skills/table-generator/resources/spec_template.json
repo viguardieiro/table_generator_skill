@@ -1,7 +1,19 @@
 {
-  "rows": { "field": "model", "order": ["Baseline", "Ours"] },
+  "rows": {
+    "field": "model",
+    "order": ["Baseline", "Ours"],
+    "order_by": { "column": "Accuracy", "direction": "max" }
+  },
   "cols": { "field": "dataset", "order": ["MNLI", "SST2"] },
-  "metric": { "field": "metric", "value": "acc", "direction": "max" },
+  "metric": {
+    "field": "metric",
+    "value": "result",
+    "direction": {
+      "Accuracy": "max",
+      "F1": "max",
+      "Loss": "min"
+    }
+  },
   "aggregate": {
     "over": ["seed"],
     "stat": "mean",
@@ -10,12 +22,16 @@
   "format": {
     "mode": "pm",
     "mean_decimals": 2,
-    "unc_decimals": 2
+    "unc_decimals": 2,
+    "overrides": {
+      "Loss": { "mean_decimals": 3, "unc_decimals": 3 }
+    }
   },
   "highlight": {
     "scope": "column",
     "best": { "style": "bold" },
-    "second": { "style": "underline" }
+    "second": { "style": "underline" },
+    "ties": "all"
   },
   "output": { "format": "latex" }
 }

@@ -104,20 +104,27 @@ Optional (nice-to-have):
 - Independent decimal control for mean and uncertainty
 - Scientific notation (optional)
 - Custom value templates
+- Per-column formatting overrides
 
 ### Highlighting
 
 - Best / worst / second-best values
 - Per-row or per-column comparison
+- Per-column direction (e.g., accuracy ↑, loss ↓)
 - Styles:
   - bold
   - underline
   - background color (LaTeX only)
+- Tie handling (`all`, `first`, `none`)
 
 ### Output formats
 
 - LaTeX (booktabs-style)
 - Markdown (pipe tables, GitHub-compatible)
+
+### Ordering
+
+- Order rows by a reference column (e.g., sort by a dataset metric)
 
 ## Status
 
