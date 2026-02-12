@@ -15,6 +15,7 @@ Arguments:
 - `--spec`: spec JSON file.
 - `--out`: optional output path. If omitted, output is printed to stdout.
 - `--preview`: render an HTML preview instead of the main output.
+- `--open`: open the HTML preview in the default browser (macOS only). If `--out` is not set, a temp file is created.
 
 Behavior:
 - Exits non-zero on schema errors.

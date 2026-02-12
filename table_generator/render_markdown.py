@@ -66,6 +66,7 @@ def render_markdown(
     table: Dict[str, Any],
     highlights: Dict[Tuple[Any, Any], str],
     spec: Dict[str, Any],
+    markers: Dict[Tuple[Any, Any], str] | None = None,
 ) -> str:
     rows = table["rows"]
     cols = table["cols"]
@@ -121,6 +122,8 @@ def render_markdown(
                     style = highlight_spec.get(highlight, {}).get("style")
                     if style:
                         text = _apply_style(text, style, bold_token, underline_token)
+                if markers and (r, c) in markers:
+                    text = f"{text}{markers[(r, c)]}"
             row.append(text)
         body_rows.append(row)
         if group is not None and group_last.get(group.get("label", "")) == r:

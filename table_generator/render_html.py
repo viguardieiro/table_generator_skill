@@ -76,6 +76,7 @@ def render_html(
     table: Dict[str, Any],
     highlights: Dict[Tuple[Any, Any], str],
     spec: Dict[str, Any],
+    markers: Dict[Tuple[Any, Any], str] | None = None,
 ) -> str:
     rows = table["rows"]
     cols = table["cols"]
@@ -154,6 +155,8 @@ def render_html(
                     style = highlight_spec.get(highlight, {}).get("style")
                     if style:
                         text = _apply_style(text, style)
+                if markers and (r, c) in markers:
+                    text = f"{text}<sup>{html_escape(markers[(r, c)])}</sup>"
             row_cells.append(f"<td>{text}</td>")
         parts.append("<tr>" + "".join(row_cells) + "</tr>")
 

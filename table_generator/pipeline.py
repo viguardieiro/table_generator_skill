@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple
 
 from .render_latex import render_latex
 from .render_markdown import render_markdown
-from .stats import bootstrap_percentile, mean, median, sem, std
+from .stats import bootstrap_diff_ci, bootstrap_percentile, mean, median, sem, std
 
 
 def build_table(records: List[Dict[str, Any]], spec: Dict[str, Any]) -> Dict[str, Any]:
@@ -20,10 +20,11 @@ def compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tupl
 def render_pipeline(records: List[Dict[str, Any]], spec: Dict[str, Any]) -> Dict[str, Any]:
     table = build_table(records, spec)
     highlights = compute_highlights(table, spec)
+    markers = compute_significance(table, spec)
     if spec["output"]["format"] == "latex":
-        text, preamble = render_latex(table, highlights, spec)
+        text, preamble = render_latex(table, highlights, spec, markers)
     else:
-        text = render_markdown(table, highlights, spec)
+        text = render_markdown(table, highlights, spec, markers)
         preamble = []
 
     return {
@@ -119,7 +120,7 @@ def _aggregate(records: List[Dict[str, Any]], spec: Dict[str, Any]) -> Dict[str,
     cells: Dict[Tuple[Any, Any], Dict[str, Any]] = {}
     for key, values in grouped.items():
         center = stat_fn(values)
-        cell = {"center": center, "n": len(values), "unc": None, "ci": None}
+        cell = {"center": center, "n": len(values), "unc": None, "ci": None, "values": values}
         if unc_type == "std":
             cell["unc"] = std(values)
         elif unc_type == "sem":
@@ -142,6 +143,7 @@ def _aggregate(records: List[Dict[str, Any]], spec: Dict[str, Any]) -> Dict[str,
     table["rows"] = _apply_row_order_by(table, spec)
     _validate_groups(table["rows"], rows_spec.get("groups"), axis="rows")
     _validate_groups(table["cols"], cols_spec.get("groups"), axis="cols")
+    _apply_summaries(table, spec)
     return table
 
 
@@ -217,6 +219,12 @@ def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tup
     cells = table["cells"]
     rows = table["rows"]
     cols = table["cols"]
+    summary_rows = set(table.get("summary_rows", []))
+    summary_cols = set(table.get("summary_cols", []))
+    summary_rows = set(table.get("summary_rows", []))
+    summary_cols = set(table.get("summary_cols", []))
+    summary_rows = set(table.get("summary_rows", []))
+    summary_cols = set(table.get("summary_cols", []))
 
     highlights: Dict[Tuple[Any, Any], str] = {}
 
@@ -253,6 +261,8 @@ def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tup
             dir_value = _direction_for_column(spec, c) if isinstance(direction, dict) else direction
             items = []
             for r in rows:
+                if r in summary_rows or c in summary_cols:
+                    continue
                 cell = cells.get((r, c))
                 if cell is None:
                     continue
@@ -264,6 +274,8 @@ def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tup
         for r in rows:
             items = []
             for c in cols:
+                if r in summary_rows or c in summary_cols:
+                    continue
                 cell = cells.get((r, c))
                 if cell is None:
                     continue
@@ -277,7 +289,101 @@ def _compute_highlights(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tup
             direction = next(iter(unique))
         items = []
         for (r, c), cell in cells.items():
+            if r in summary_rows or c in summary_cols:
+                continue
             items.append((r, c, cell["center"]))
         apply_group(items, direction)
 
     return highlights
+
+
+def compute_significance(table: Dict[str, Any], spec: Dict[str, Any]) -> Dict[Tuple[Any, Any], str]:
+    sig = spec.get("significance")
+    if not sig:
+        return {}
+    baseline = sig["baseline"]
+    level = sig.get("level", 0.95)
+    n_boot = sig.get("n_boot", 1000)
+    seed = sig.get("seed", 0)
+    symbol = sig.get("symbol", "*")
+    direction = spec["metric"]["direction"]
+
+    markers: Dict[Tuple[Any, Any], str] = {}
+    rows = table["rows"]
+    cols = table["cols"]
+    summary_rows = set(table.get("summary_rows", []))
+    summary_cols = set(table.get("summary_cols", []))
+    cells = table["cells"]
+
+    if baseline not in rows:
+        return markers
+
+    for c in cols:
+        if c in summary_cols:
+            continue
+        dir_value = _direction_for_column(spec, c) if isinstance(direction, dict) else direction
+        base_cell = cells.get((baseline, c))
+        if base_cell is None:
+            continue
+        base_vals = base_cell.get("values") or []
+        for r in rows:
+            if r == baseline:
+                continue
+            if r in summary_rows:
+                continue
+            cell = cells.get((r, c))
+            if cell is None:
+                continue
+            vals = cell.get("values") or []
+            if not vals or not base_vals:
+                continue
+            lo, hi = bootstrap_diff_ci(vals, base_vals, mean, level, n_boot, seed)
+            # If direction is min, flip sign so "better" is positive
+            if dir_value == "min":
+                lo, hi = -hi, -lo
+            if lo > 0:
+                markers[(r, c)] = symbol
+    return markers
+
+
+def _apply_summaries(table: Dict[str, Any], spec: Dict[str, Any]) -> None:
+    agg = spec.get("aggregate", {})
+    row_summary = agg.get("row_summary")
+    col_summary = agg.get("col_summary")
+    cells = table["cells"]
+    table.setdefault("summary_cols", [])
+    table.setdefault("summary_rows", [])
+
+    if row_summary:
+        label = row_summary["label"]
+        stat = row_summary.get("stat", "mean")
+        position = row_summary.get("position", "end")
+        summary_col = label
+        table["summary_cols"].append(summary_col)
+        if position == "start":
+            table["cols"] = [summary_col] + table["cols"]
+        else:
+            table["cols"].append(summary_col)
+        for r in table["rows"]:
+            values = [cells[(r, c)]["center"] for c in table["cols"] if (r, c) in cells and c != summary_col]
+            if not values:
+                continue
+            center = mean(values) if stat == "mean" else median(values)
+            cells[(r, summary_col)] = {"center": center, "n": len(values), "unc": None, "ci": None, "values": values}
+
+    if col_summary:
+        label = col_summary["label"]
+        stat = col_summary.get("stat", "mean")
+        position = col_summary.get("position", "end")
+        summary_row = label
+        table["summary_rows"].append(summary_row)
+        if position == "start":
+            table["rows"] = [summary_row] + table["rows"]
+        else:
+            table["rows"].append(summary_row)
+        for c in table["cols"]:
+            values = [cells[(r, c)]["center"] for r in table["rows"] if (r, c) in cells and r != summary_row]
+            if not values:
+                continue
+            center = mean(values) if stat == "mean" else median(values)
+            cells[(summary_row, c)] = {"center": center, "n": len(values), "unc": None, "ci": None, "values": values}

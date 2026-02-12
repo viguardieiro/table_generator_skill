@@ -86,3 +86,44 @@
   "output": { "format": "latex" }
 }
 ```
+
+## 5) Row/column mean summaries
+
+```json
+{
+  "rows": { "field": "model" },
+  "cols": { "field": "dataset" },
+  "metric": { "field": "metric", "value": "acc", "direction": "max" },
+  "aggregate": {
+    "over": ["seed"],
+    "stat": "mean",
+    "uncertainty": { "type": "std" },
+    "row_summary": { "label": "Mean", "stat": "mean" },
+    "col_summary": { "label": "Mean", "stat": "mean" }
+  },
+  "format": { "mode": "pm", "mean_decimals": 2, "unc_decimals": 2 },
+  "output": { "format": "latex" }
+}
+```
+
+## 6) Significance markers vs baseline
+
+```json
+{
+  "rows": { "field": "model" },
+  "cols": { "field": "dataset" },
+  "metric": { "field": "metric", "value": "acc", "direction": "max" },
+  "aggregate": { "over": ["seed"], "stat": "mean", "uncertainty": { "type": "std" } },
+  "significance": {
+    "baseline": "Baseline",
+    "scope": "column",
+    "method": "bootstrap_ci",
+    "level": 0.95,
+    "n_boot": 1000,
+    "seed": 0,
+    "symbol": "*"
+  },
+  "format": { "mode": "pm", "mean_decimals": 2, "unc_decimals": 2 },
+  "output": { "format": "latex" }
+}
+```

@@ -85,6 +85,7 @@ def render_latex(
     table: Dict[str, Any],
     highlights: Dict[Tuple[Any, Any], str],
     spec: Dict[str, Any],
+    markers: Dict[Tuple[Any, Any], str] | None = None,
 ) -> Tuple[str, List[str]]:
     rows = table["rows"]
     cols = table["cols"]
@@ -180,6 +181,8 @@ def render_latex(
                     style = highlight_spec.get(highlight, {}).get("style")
                     if style:
                         text = _apply_style(text, style)
+                if markers and (r, c) in markers:
+                    text = f"{text}\\textsuperscript{{{markers[(r, c)]}}}"
             row_cells.append(text)
         lines.append(" & ".join(row_cells) + " \\\\")
         if group is not None and group_last.get(group.get("label", "")) == r:

@@ -5,12 +5,14 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tempfile
+import subprocess
 from typing import Any, Dict, List
 
 from .api import render_table
 from .schema import SchemaError, validate_spec
 from .templates import DEFAULT_RECORDS, DEFAULT_SPEC
-from .pipeline import build_table, compute_highlights
+from .pipeline import build_table, compute_highlights, compute_significance
 from .render_html import render_html
 
 
@@ -43,7 +45,8 @@ def cmd_render(args: argparse.Namespace) -> int:
         if args.preview:
             table = build_table(records, validated)
             highlights = compute_highlights(table, validated)
-            text = render_html(table, highlights, validated)
+            markers = compute_significance(table, validated)
+            text = render_html(table, highlights, validated, markers)
             result = {"text": text}
         else:
             result = render_table(records, validated)
@@ -52,10 +55,21 @@ def cmd_render(args: argparse.Namespace) -> int:
         return 2
 
     text = result["text"]
-    if args.out:
-        with open(args.out, "w", encoding="utf-8") as handle:
+    out_path = args.out
+    if args.preview and args.open and not out_path:
+        temp = tempfile.NamedTemporaryFile(delete=False, suffix=".html")
+        out_path = temp.name
+        temp.close()
+
+    if out_path:
+        with open(out_path, "w", encoding="utf-8") as handle:
             handle.write(text)
     print(text)
+
+    if args.preview and args.open:
+        target = out_path
+        if target:
+            subprocess.run(["open", target], check=False)
     return 0
 
 
@@ -81,6 +95,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--preview",
         action="store_true",
         help="Render an HTML preview instead of the main output",
+    )
+    render.add_argument(
+        "--open",
+        action="store_true",
+        help="Open the HTML preview in the default browser (macOS only)",
     )
     render.set_defaults(func=cmd_render)
 

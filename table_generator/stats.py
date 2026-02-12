@@ -56,3 +56,28 @@ def bootstrap_percentile(
     lo_idx = int(math.floor(alpha * (n_boot - 1)))
     hi_idx = int(math.ceil((1.0 - alpha) * (n_boot - 1)))
     return (stats[lo_idx], stats[hi_idx])
+
+
+def bootstrap_diff_ci(
+    values_a: List[float],
+    values_b: List[float],
+    stat_fn: Callable[[List[float]], float],
+    level: float,
+    n_boot: int,
+    seed: int,
+) -> Tuple[float, float]:
+    rng = random.Random(seed)
+    n_a = len(values_a)
+    n_b = len(values_b)
+    if n_a == 0 or n_b == 0:
+        return (float("nan"), float("nan"))
+    diffs = []
+    for _ in range(n_boot):
+        sample_a = [values_a[rng.randrange(n_a)] for _ in range(n_a)]
+        sample_b = [values_b[rng.randrange(n_b)] for _ in range(n_b)]
+        diffs.append(stat_fn(sample_a) - stat_fn(sample_b))
+    diffs.sort()
+    alpha = (1.0 - level) / 2.0
+    lo_idx = int(math.floor(alpha * (n_boot - 1)))
+    hi_idx = int(math.ceil((1.0 - alpha) * (n_boot - 1)))
+    return (diffs[lo_idx], diffs[hi_idx])

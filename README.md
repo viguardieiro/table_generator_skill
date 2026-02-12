@@ -44,10 +44,10 @@ Important: the agent is instructed to treat raw results as **read-only** and onl
 
 ## Potential next features
 
-- Simple multi-level column headers / column groups
 - Multiple metrics per table (single spec, adjacent metric columns)
+- Delta vs baseline columns
+- Per-column sorting (auto-sort by a chosen column)
 - Row/column filtering by regex or allowlist
-- Add a per-row “Mean” column across datasets
 - Auto-generated footnotes/notes (e.g., “mean ± std over 5 seeds”)
 - Regex or partial-match renaming rules
 

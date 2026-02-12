@@ -54,6 +54,7 @@ Optional preview (helpful for checking formatting and groups):
 
 ```bash
 tablegen render --records records.json --spec spec.json --preview --out preview.html
+tablegen render --records records.json --spec spec.json --preview --open
 ```
 
 ## Docs
@@ -149,6 +150,14 @@ Optional (nice-to-have):
 ### Ordering
 
 - Order rows by a reference column (e.g., sort by a dataset metric)
+
+### Summaries
+
+- Add per-row or per-column mean summaries
+
+### Significance
+
+- Significance markers vs a baseline (bootstrap CI on difference)
 
 ## Status
 

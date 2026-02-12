@@ -154,6 +154,26 @@ If `type` is `"ci"`, add:
 - `n_boot` (int, optional, default: `1000`)
 - `seed` (int, optional, default: `0`)
 
+### `aggregate.row_summary` / `aggregate.col_summary`
+
+Add a summary column (per row) or summary row (per column).
+
+```json
+"aggregate": {
+  "row_summary": { "label": "Mean", "stat": "mean", "position": "end" },
+  "col_summary": { "label": "Mean", "stat": "mean", "position": "end" }
+}
+```
+
+Fields:
+- `label` (string, required): label for the summary row/column.
+- `stat` (string, optional, default: `"mean"`): `"mean"` or `"median"`.
+- `position` (string, optional, default: `"end"`): `"start"` or `"end"`.
+
+Behavior:
+- Summaries are computed over available center values (not raw seeds).
+- Uncertainty is not shown for summary cells.
+
 ## `format`
 
 Example:
@@ -202,6 +222,35 @@ Behavior:
 - `ties=all`: highlight all tied values and skip second-best when best ties exist.
 - `ties=first`: highlight first occurrence only.
 - `ties=none`: if there is a tie for best or second-best, skip highlighting for that rank.
+
+## `significance`
+
+Add significance markers relative to a baseline row (per column).
+
+```json
+"significance": {
+  "baseline": "Baseline",
+  "scope": "column",
+  "method": "bootstrap_ci",
+  "level": 0.95,
+  "n_boot": 1000,
+  "seed": 0,
+  "symbol": "*"
+}
+```
+
+Fields:
+- `baseline` (string, required): row label to compare against.
+- `scope` (string, optional, default: `"column"`): only `"column"` supported.
+- `method` (string, optional, default: `"bootstrap_ci"`): only `"bootstrap_ci"` supported.
+- `level` (float, optional, default: `0.95`): CI level in (0,1).
+- `n_boot` (int, optional, default: `1000`).
+- `seed` (int, optional, default: `0`).
+- `symbol` (string, optional, default: `"*"`): marker appended to significant cells.
+
+Behavior:
+- Uses bootstrap CI on difference in means vs baseline.
+- For `metric.direction="min"`, the sign is flipped so “better” is positive.
 
 ## `output`
 

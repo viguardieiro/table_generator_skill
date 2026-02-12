@@ -156,6 +156,21 @@ def validate_spec(spec: Dict[str, Any]) -> Dict[str, Any]:
         if not isinstance(n_boot, int) or n_boot <= 0:
             raise _path_err("spec.aggregate.uncertainty.n_boot", "n_boot must be a positive int")
 
+    # Summary rows/cols
+    for key in ("row_summary", "col_summary"):
+        summary = agg.get(key)
+        if summary is not None:
+            if not isinstance(summary, dict):
+                raise _path_err(f"spec.aggregate.{key}", "Must be an object")
+            if "label" not in summary:
+                raise _path_err(f"spec.aggregate.{key}.label", "Missing required field")
+            stat = summary.get("stat", "mean")
+            if stat not in VALID_STATS:
+                raise _path_err(f"spec.aggregate.{key}.stat", "Unsupported stat")
+            position = summary.get("position")
+            if position is not None and position not in ("start", "end"):
+                raise _path_err(f"spec.aggregate.{key}.position", "Must be 'start' or 'end'")
+
     # Format
     fmt = merged.get("format", {})
     if fmt.get("mode") not in VALID_FORMAT_MODES:
@@ -210,5 +225,25 @@ def validate_spec(spec: Dict[str, Any]) -> Dict[str, Any]:
         direction = order_by.get("direction")
         if direction is not None and direction not in VALID_DIRECTION:
             raise _path_err("spec.rows.order_by.direction", "Must be 'min' or 'max'")
+
+    # Significance markers
+    sig = merged.get("significance")
+    if sig is not None:
+        if not isinstance(sig, dict):
+            raise _path_err("spec.significance", "Must be an object")
+        if "baseline" not in sig:
+            raise _path_err("spec.significance.baseline", "Missing required field")
+        scope = sig.get("scope", "column")
+        if scope not in ("column",):
+            raise _path_err("spec.significance.scope", "Only 'column' is supported")
+        method = sig.get("method", "bootstrap_ci")
+        if method not in ("bootstrap_ci",):
+            raise _path_err("spec.significance.method", "Only 'bootstrap_ci' is supported")
+        level = sig.get("level", 0.95)
+        if not (0 < level < 1):
+            raise _path_err("spec.significance.level", "level must be between 0 and 1")
+        n_boot = sig.get("n_boot", 1000)
+        if not isinstance(n_boot, int) or n_boot <= 0:
+            raise _path_err("spec.significance.n_boot", "n_boot must be a positive int")
 
     return merged
