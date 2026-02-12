@@ -101,6 +101,19 @@ For `"ci"`:
 - `level` is a fraction (0–1), not a percent
 - `n_boot` must be a positive integer
 
+### Summaries (row/column mean)
+
+```json
+"aggregate": {
+  "row_summary": { "label": "Mean", "stat": "mean", "position": "end" },
+  "col_summary": { "label": "Mean", "stat": "mean", "position": "end" }
+}
+```
+
+- `label`: label for the summary row/column
+- `stat`: `"mean"` or `"median"`
+- `position`: `"start"` or `"end"`
+
 ## Formatting
 
 ```json
@@ -135,6 +148,28 @@ For `"ci"`:
 - `scope`: `"column"`, `"row"`, or `"table"`
 - `style`: `"bold"`, `"underline"`, or `"cellcolor:<color>"`
 - `ties`: `"all"`, `"first"`, or `"none"`
+
+## Significance markers
+
+```json
+"significance": {
+  "baseline": "Baseline",
+  "scope": "column",
+  "method": "bootstrap_ci",
+  "level": 0.95,
+  "n_boot": 1000,
+  "seed": 0,
+  "symbol": "*"
+}
+```
+
+- `baseline`: row label to compare against
+- `scope`: only `"column"` is supported
+- `method`: only `"bootstrap_ci"` is supported
+- `level`: CI level (0–1)
+- `n_boot`: number of bootstrap samples
+- `seed`: bootstrap seed
+- `symbol`: appended marker
 
 ## Output
 

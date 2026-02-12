@@ -58,6 +58,8 @@ Use these rules:
 - `metric.field` + `metric.value` filter records; they do not create columns. If you need multiple metrics as columns, see the reference.
 - For uncertainty, set `aggregate.uncertainty.type` (`none`, `std`, `sem`, or `ci`). CI requires extra fields (method, level, n_boot).
 - If metrics have mixed directions (e.g., accuracy vs loss), use a per-column `metric.direction` map (see reference).
+- For row/column mean summaries, use `aggregate.row_summary` / `aggregate.col_summary` (see reference).
+- For significance markers, use the `significance` block (see reference).
 
 ## Handle Errors
 
