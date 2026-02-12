@@ -27,6 +27,44 @@ description: Generate publication-ready LaTeX or Markdown tables from long-form 
 - Required fields: `rows.field`, `cols.field`, `metric.field`, `metric.value`, `metric.direction`, `aggregate.over`.
 - Output format: set `output.format` to `latex` or `markdown`.
 
+## Spec reference
+
+### Uncertainty options
+
+Valid `aggregate.uncertainty.type` values:
+- `"none"` – no uncertainty
+- `"std"` – standard deviation
+- `"sem"` – standard error of the mean
+- `"ci"` – bootstrap confidence interval (requires additional fields)
+
+For `"type": "ci"`:
+```json
+"uncertainty": {
+  "type": "ci",
+  "method": "bootstrap_percentile",
+  "level": 0.95,
+  "n_boot": 10000
+}
+```
+
+- `level` must be between 0 and 1 (e.g., 0.95 for 95% CI), NOT a percentage
+- `n_boot` is the number of bootstrap samples (default: 1000)
+
+### How metric filtering works
+
+**Important**: `metric.field` and `metric.value` are used to *filter* records, not define columns. Only records where `record[metric.field] == metric.value` are included in the table.
+
+If you want multiple metrics as columns:
+1. Add a dummy metric field to each record (e.g., `"metric": "result"`)
+2. Use your actual metric names in a separate column field (e.g., `"col": "Accuracy"`)
+3. Set `metric.value` to match your dummy value (e.g., `"value": "result"`)
+
+Example record structure for multiple metrics as columns:
+```json
+{"method": "Baseline", "col": "Accuracy", "metric": "result", "sample": 0, "value": 0.85}
+{"method": "Baseline", "col": "F1-Score", "metric": "result", "sample": 0, "value": 0.82}
+```
+
 ## Error handling
 
 - If the CLI exits with an error, read the path in the message (e.g., `spec.aggregate.uncertainty.level`) and fix the spec or the records accordingly.
